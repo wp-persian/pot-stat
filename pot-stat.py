@@ -34,21 +34,27 @@ class WordCounter:
             print("%s, %s" % (word, count), file=sys.stdout)
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python pot-stat.py potfile.pot")
+    if len(sys.argv) == 1:
+        print("Usage: python pot-stat.py potfile1.pot potfile2.pot ...")
         exit(1)
 
     msgid = re.compile("msgid \"(.*)\"")
     wc = WordCounter()
 
-    filename = sys.argv[1]
-    with open(filename) as lines:
-        for l in lines:
-            match = msgid.split(l)
-            if len(match) == 3:
-                wc.update(match[1])
+    prev_msgs = 0
+    prev_tokens = 0
+    for filename in sys.argv[1:]:
+        with open(filename) as lines:
+            for l in lines:
+                match = msgid.split(l)
+                if len(match) == 3:
+                    wc.update(match[1])
             
-    print("%s: %s messages, %s tokens" % (filename, wc.update_counter, len(wc.words)), file=sys.stderr)
+        print("%s: %s messages, %s tokens" % (filename, wc.update_counter - prev_msgs, len(wc.words) - prev_tokens), file=sys.stderr)
+        prev_tokens = len(wc.words)
+        prev_msgs = wc.update_counter
+
+    print("Total: %s messages, %s tokens" % (wc.update_counter, len(wc.words)), file=sys.stderr)
     wc.toCSV()
 
 if __name__ == "__main__":
